@@ -1,5 +1,9 @@
 const mongoose = require('mongoose')
 
+//Salt 이용 bcrypt 암호화 사용
+const bcrypt = require('bcrypt');
+const saltRounds = 10;
+
 const userSchema = mongoose.Schema({
     name: {
         type: String,
@@ -9,6 +13,10 @@ const userSchema = mongoose.Schema({
         type: String,
         trim: true,
         unique: 1
+    },
+    password: {
+        type: String,
+        minlength: 5
     },
     lastname: {
         type: String,
@@ -24,6 +32,28 @@ const userSchema = mongoose.Schema({
     },
     tokenExp: {
         type: Number
+    }
+})
+
+userSchema.pre('save', function ( next ) {
+
+    var user = this;
+
+    if (user.isModified('password')) {
+
+        bcrypt.genSalt(saltRounds, function(err, salt) {
+        
+            if (err) return next(err);
+            
+            bcrypt.hash(user.password, salt, function(err, hash) {
+                // Store hash in your password DB.
+                if (err) return next(err);
+    
+                user.password = hash;
+    
+                next();
+            });
+        });
     }
 })
 
